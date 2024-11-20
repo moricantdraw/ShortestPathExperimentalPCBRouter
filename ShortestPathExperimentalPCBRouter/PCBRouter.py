@@ -3,19 +3,20 @@ from dijkstra import dijkstra
 class PCBRouter:
     def __init__(self, grid):
         """
-        Initializes the PCB router with a grid.
-        :param grid: 2D list representing the PCB layout.
-                     0 represents free space, 1 represents obstacles.
+        Initializes the PCB router with a grid in which 0 represents free space, and 1 represents obstacles.
+            Parameters 
+            grid: 2D list representing the PCB layout.
         """
         self.grid = grid
 
     def route(self, start, end, algorithm):
         """
         Routes a wire from start to end using the specified algorithm.
-        :param start: Tuple (x, y) for the start point.
-        :param end: Tuple (x, y) for the end point.
-        :param algorithm: Function to use for routing.
-        :return: List of tuples representing the path, or None if no path exists.
+        Parameters:
+            start: Tuple (x, y) for the start point.
+            end: Tuple (x, y) for the end point.
+            algorithm: Function to use for routing.
+        Returns a list of tuples representing the path, or None if no path exists.
         """
         path = algorithm(self.grid, start, end)
         if path:
@@ -29,9 +30,10 @@ class PCBRouter:
     def multi_route(self, start_end_pairs, algorithm):
         """
         Routes multiple start-end pairs ensuring paths don't cross.
-        :param start_end_pairs: List of tuples [(start1, end1), (start2, end2), ...].
-        :param algorithm: Function to use for routing.
-        :return: List of all routed paths.
+        Parameters
+            start_end_pairs: List of tuples [(start1, end1), (start2, end2), ...].
+            algorithm: Function to use for routing.
+        Returns a list of all routed paths.
         """
         all_paths = []
         for start, end in start_end_pairs:
@@ -47,15 +49,15 @@ class PCBRouter:
         return all_paths
 
 
-# Example Usage
+# main router function
 if __name__ == "__main__":
-    # Create an empty grid
-    rows, cols = 5, 5  # Default grid size
+    # Creates PCB matrix 
+    rows, cols = 5, 5  # size
     pcb_grid = [[0 for _ in range(cols)] for _ in range(rows)]
 
     router = PCBRouter(pcb_grid)
     
-    # Ask user if they want to use Dijkstra
+    # Prompt user input for choice algorithm
     print("Available algorithms:")
     print("1. Dijkstra's Algorithm")
     algorithm_choice = input("Choose routing algorithm (1 for Dijkstra): ").strip()
@@ -66,7 +68,7 @@ if __name__ == "__main__":
         print("Invalid choice. Defaulting to Dijkstra's Algorithm.")
         algorithm = dijkstra
 
-    # Collect start-end pairs from the user
+    # Prompt user input for start-end pairs from the user
     print("Enter multiple start and end points as row and column indices (e.g., 0 0 4 4):")
     print("Separate each pair with a newline. Enter 'done' when finished.")
     
@@ -76,8 +78,9 @@ if __name__ == "__main__":
         if user_input.lower() == "done":
             break
         try:
+            #parce input
             coords = list(map(int, user_input.split()))
-            if len(coords) == 4:  # Corrected
+            if len(coords) == 4:  
                 start, end = (coords[0], coords[1]), (coords[2], coords[3])
                 start_end_pairs.append((start, end))
             else:
