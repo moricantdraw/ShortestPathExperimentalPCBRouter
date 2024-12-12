@@ -1,36 +1,36 @@
 import networkx as nx
+import matplotlib.pyplot as plt
 
 
-def is_planar_and_thickness(adj_matrix):
+def is_planar_and_thickness(edges):
     """
-    Determine if a graph is planar and calculate its thickness if not planar.
+    Determine if a graph is planar and calculate its thickness if not planar. Return and draws the graphs that would be on each layer.
 
     Parameters:
-        adj_matrix (list of list of int): The adjacency matrix of the graph.
+        edges (list of tuples): List of tuples where the first index of the tuple is the start node and the second index is the end node
 
     Returns:
         tuple: A tuple (is_planar, thickness, subgraphs) where:
-               - is_planar (bool): True if the graph is planar, otherwise False.
-               - thickness (int): If the graph is not planar, the thickness of the graph. If planar, 1.
-               - subgraphs (list of edges): list of edges on each layer for this partition
+               - is_planar (bool): True if the graph is planar, otherwise False
+               - thickness (int): If the graph is not planar, the thickness of the graph. If planar, 1
+               - connectivity_map_list (list of connectivity maps): list of connectivity maps for each layer
     """
-    # Convert adjacency matrix to a NetworkX graph
+    # Convert list of edges to a networkx graph
     G = nx.Graph()
-    for i in range(len(adj_matrix)):
-        for j in range(i + 1, len(adj_matrix)):
-            if adj_matrix[i][j]:
-                G.add_edge(i, j)
+    G.add_edges_from(edges)
 
     # If not planar, calculate thickness
     # Start with an upper bound equal to the number of edges (trivial case: each edge is its own subgraph)
     edges = list(G.edges)
+    print(edges)
     n = len(edges)
 
     # Check if the graph is planar
     is_planar, _ = nx.check_planarity(G)
 
     if is_planar:
-        return True, 1, edges  # A planar graph has thickness 1
+        connectivity_map = {node: list(neighbors) for node, neighbors in G.adjacency()}
+        return True, 1, [connectivity_map]  # A planar graph has thickness 1
 
     for k in range(2, n + 1):  # Check from 2 subgraphs up to the number of edges
         for decomposition in generate_partitions(edges, k):
@@ -41,9 +41,23 @@ def is_planar_and_thickness(adj_matrix):
 
             # Check if all subgraphs are planar
             if all(nx.check_planarity(subgraph)[0] for subgraph in subgraphs):
-                return False, k, subgraphs
+                connectivity_map_list = []
+                for subgraph in subgraphs:
+                    connectivity_map = {
+                        node: list(neighbors)
+                        for node, neighbors in subgraph.adjacency()
+                    }
+                    connectivity_map_list.append(connectivity_map)
+                    plt.figure()
+                    nx.draw(subgraph)
+                return False, k, connectivity_map_list
 
-    return False, n, edges  # In worst case, the thickness equals the number of edges
+    # In worst case, the thickness equals the number of edges
+    connectivity_map_list = []
+    for i in range(len(edges)):
+        connectivity_map = {edges[0]: edges[1]}
+        connectivity_map_list.append(connectivity_map)
+    return False, n, connectivity_map_list
 
 
 def generate_partitions(elements, k):
