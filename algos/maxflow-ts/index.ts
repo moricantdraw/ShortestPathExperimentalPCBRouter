@@ -9,7 +9,18 @@ function checkPlanarityAndThickness(edges: [string, string][]): [boolean, number
      * For now, this is a placeholder and assumes all graphs are planar.
      */
     function isPlanarGraph(edges: [string, string][]): boolean {
-        return true; // Replace with actual planarity logic (e.g., Kuratowski's theorem or Hopcroft-Tarjan algorithm).
+        const adjacencyList: { [key: string]: string[] } = {};
+        edges.forEach(([u, v]) => {
+            if (!adjacencyList[u]) adjacencyList[u] = [];
+            if (!adjacencyList[v]) adjacencyList[v] = [];
+            adjacencyList[u].push(v);
+            adjacencyList[v].push(u);
+        });
+
+        // Placeholder: Implement Hopcroft-Tarjan planarity testing algorithm
+        // For simplicity, we assume graphs with <= 4 nodes are planar.
+        return Object.keys(adjacencyList).length <= 4;
+    }
     }
 
     /**
@@ -17,44 +28,49 @@ function checkPlanarityAndThickness(edges: [string, string][]): [boolean, number
      * For non-planar graphs, it determines the minimum number of layers needed.
      */
     function decomposeIntoPlanarSubgraphs(edges: [string, string][], maxSubgraphs: number): object[] {
-        return []; // Placeholder for actual decomposition logic.
-    }
+        r/**
+     * Helper function to decompose a graph into planar subgraphs using a greedy algorithm.
+     */
+    function decomposeIntoPlanarSubgraphs(edges: [string, string][], maxSubgraphs: number): object[] {
+        const subgraphs: object[] = [];
+        const remainingEdges = [...edges];
 
-    // Check if the graph is planar
-    if (isPlanarGraph(edges)) {
-        return [true, 1, [edges]]; // Planar graphs only need one layer.
-    }
-
-    // For non-planar graphs, attempt to decompose into multiple planar subgraphs.
-    for (let k = 2; k <= edges.length; k++) {
-        const subgraphs = decomposeIntoPlanarSubgraphs(edges, k);
-        if (subgraphs.length > 0) {
-            return [false, k, subgraphs]; // Non-planar graph with `k` layers.
+        for (let i = 0; i < maxSubgraphs; i++) {
+            const subgraphEdges: [string, string][] = [];
+            for (let j = remainingEdges.length - 1; j >= 0; j--) {
+                subgraphEdges.push(remainingEdges[j]);
+                if (isPlanarGraph(subgraphEdges)) {
+                    remainingEdges.splice(j, 1); // Remove edge from remaining
+                } else {
+                    subgraphEdges.pop(); // Undo if adding the edge makes it non-planar
+                }
+            }
+            subgraphs.push(subgraphEdges);
+            if (remainingEdges.length === 0) break; // Stop if all edges are processed
         }
+
+        return remainingEdges.length === 0 ? subgraphs : []; // Return subgraphs if decomposition succeeded
+    }
     }
 
-    // If decomposition fails, return the graph as fully non-planar.
-    return [false, edges.length, []];
-}
+    
 
 // Ford-Fulkerson method for maximum flow calculation
 function fordFulkerson(capacity: { [key: string]: { [key: string]: number } }, source: string, sink: string): number {
-    /**
-     * Residual graph is a copy of the capacity graph, which gets updated as we find augmenting paths.
-     */
+     // Residual graph is a copy of the capacity graph, which gets updated as we find augmenting paths :)
     const residualCapacity: { [key: string]: { [key: string]: number } } = JSON.parse(JSON.stringify(capacity));
 
-    /**
-     * Helper function to find an augmenting path using Depth-First Search (DFS).
-     * Returns the path if found, otherwise returns null.
-     */
+    
+     // Helper function to find an augmenting path using DFS.
+     // Returns the path if found, otherwise returns null.
+     
     function dfsFindAugmentingPath(
         current: string,
         sink: string,
         visited: Set<string>,
         path: string[]
     ): string[] | null {
-        if (current === sink) return path; // Reached the sink, return the path.
+        if (current === sink) return path; // if reached the sink, returns the path.
 
         visited.add(current); // Mark the current node as visited.
 
@@ -62,11 +78,11 @@ function fordFulkerson(capacity: { [key: string]: { [key: string]: number } }, s
             // Continue exploring neighbors with positive residual capacity.
             if (!visited.has(neighbor) && residualCapacity[current][neighbor] > 0) {
                 const augmentingPath = dfsFindAugmentingPath(neighbor, sink, visited, [...path, neighbor]);
-                if (augmentingPath) return augmentingPath; // Return the augmenting path if found.
+                if (augmentingPath) return augmentingPath; // Return the augmenting path if found :) happy 
             }
         }
 
-        return null; // No augmenting path found.
+        return null; // No augmenting path found :( sad 
     }
 
     let maxFlow = 0; // Initialize the maximum flow to zero.
@@ -90,14 +106,14 @@ function fordFulkerson(capacity: { [key: string]: { [key: string]: number } }, s
         for (let i = 0; i < augmentingPath.length - 1; i++) {
             const u = augmentingPath[i];
             const v = augmentingPath[i + 1];
-            residualCapacity[u][v] -= pathFlow; // Decrease capacity in forward direction.
-            residualCapacity[v][u] = (residualCapacity[v][u] || 0) + pathFlow; // Increase capacity in reverse direction.
+            residualCapacity[u][v] -= pathFlow; // Decreases capacity in forward direction.
+            residualCapacity[v][u] = (residualCapacity[v][u] || 0) + pathFlow; // Increases capacity in reverse direction.
         }
 
-        maxFlow += pathFlow; // Add the bottleneck capacity to the total flow.
+        maxFlow += pathFlow; // Adds bottleneck capacity to the total flow.
     }
 
-    return maxFlow; // Return the total maximum flow.
+    return maxFlow; // Returns total maximum flow.
 }
 
 // Main autorouting function
@@ -156,25 +172,23 @@ export function autoroute(circuitJson: any[]): SimplifiedPcbTrace[] {
 
     const solution: SimplifiedPcbTrace[] = [];
 
-    /**
-     * Create the connectivity map as a graph with capacities.
-     */
+    
+     //Create the connectivity map as a graph with capacities.
     const connectivityMap: { [key: string]: { [key: string]: number } } = {
         'VCC': { 'R1': 1 },
         'R1': { 'VCC': 1, 'C1': 1 },
         'C1': { 'R1': 1, 'GND': 1 },
         'GND': { 'C1': 1 },
-        // Additional nodes can be added here.
+        
     };
 
-    /**
-     * Calculate the maximum flow from the source (VCC) to the sink (GND).
-     */
+    
+    //Calculate the maximum flow from the source (VCC) to the sink (GND).
+     
     const maxFlow = fordFulkerson(connectivityMap, 'VCC', 'GND');
 
-    /**
-     * If a valid flow exists, generate PCB traces.
-     */
+    // If a valid flow exists, generate PCB traces.
+    
     if (maxFlow > 0) {
         input.connections.forEach((connection, connectionIndex) => {
             connection.pointsToConnect.forEach((point, index, points) => {
